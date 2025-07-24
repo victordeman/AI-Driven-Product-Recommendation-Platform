@@ -13,5 +13,9 @@ if st.button("Get Recommendations"):
         st.write("### Recommended Products")
         for product in recommendations:
             st.write(f"- {product}")
+            rating = st.slider(f"Rate {product}", 1, 5, 3, key=product)
+            if st.button(f"Submit Rating for {product}", key=f"submit_{product}"):
+                requests.post("http://localhost:8000/feedback", json={"user_id": user_id, "product_name": product, "rating": rating})
+                st.success(f"Feedback submitted for {product}")
     else:
         st.error("Error fetching recommendations")

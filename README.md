@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This project develops a SaaS platform that leverages a Multi-AI-Agent architecture to deliver personalized product recommendations for B2B and technical B2C e-commerce markets. The system uses user behavior, preferences, and contextual data to guide users to optimal product choices, improving conversion rates and user experience.
+This project develops a SaaS platform that leverages a Multi-AI-Agent architecture using LlamaIndex to deliver personalized product recommendations for B2B and technical B2C e-commerce markets. The system uses user behavior, preferences, and contextual data to guide users to optimal product choices, improving conversion rates and user experience.
 
 **Use Case**:
 - **B2B**: A buyer searching for industrial machinery receives tailored recommendations based on industry, budget, and technical requirements.
@@ -14,17 +14,17 @@ This project develops a SaaS platform that leverages a Multi-AI-Agent architectu
 3. **Scalable API**: FastAPI endpoints for real-time recommendation queries and data management.
 4. **Secure Data Handling**: Input validation and PII protection for compliance.
 5. **Vector Search**: Postgres VectorDB for efficient similarity-based product matching.
+6. **Feedback Loop**: User ratings refine recommendations via context updates and model fine-tuning.
 
 ## Tech Stack
-- **Python**: Core programming language for AI logic and API development.
-- **AI Agents SDK**: OpenAI Agents SDK for Multi-AI-Agent orchestration.
-- **Docker**: Containerization for development and deployment.
-- **FastAPI**: RESTful APIs for user interaction and recommendation delivery.
-- **Mem0**: Memory-augmented AI agents for context retention.
-- **Postgres VectorDB**: Store and query product embeddings for similarity searches.
+- **Python 3.10**: Core language for AI and API logic.
+- **LlamaIndex SDK**: Open-source framework for indexing and querying, no API keys needed.
+- **FastAPI**: Scalable RESTful APIs for recommendations.
+- **Streamlit**: Interactive UI for user interaction.
+- **Mem0**: Context retention for personalized experiences.
+- **Postgres VectorDB**: Efficient similarity searches (requires pgvector extension).
+- **Pydantic**: Data validation for secure inputs.
 - **Pytest**: Automated testing for reliability.
-- **Pydantic**: Data validation for user inputs and API responses.
-- **Streamlit**: Interactive web interface for user interaction and analytics.
 
 ## Repository Structure
 ```
@@ -33,7 +33,7 @@ AI-Driven-Product-Recommendation-Platform/
 │   ├── api/                    # FastAPI endpoints
 │   │   ├── __init__.py
 │   │   └── main.py            # Main API application
-│   ├── agents/                # AI agent logic and workflows
+│   ├── agents/                # LlamaIndex logic and workflows
 │   │   ├── __init__.py
 │   ├── models/                # Pydantic data models
 │   │   ├── __init__.py
@@ -47,11 +47,10 @@ AI-Driven-Product-Recommendation-Platform/
 │   └── app.py                 # Streamlit application
 ├── scripts/                   # Utility scripts (e.g., database setup)
 │   └── setup_db.py
-├── docker/                    # Docker configurations
-├── Dockerfile                 # Docker image configuration
-├── docker-compose.yml         # Docker Compose for multi-container setup
+├── config/                    # Configuration files
 ├── requirements.txt           # Python dependencies
 ├── .gitignore                 # Git ignore file
+├── .env                       # Environment variables
 └── README.md                  # Project documentation
 ```
 
@@ -62,39 +61,91 @@ AI-Driven-Product-Recommendation-Platform/
    cd AI-Driven-Product-Recommendation-Platform
    ```
 
-2. **Install Dependencies**:
+2. **Install PostgreSQL and pgvector**:
+   - Install PostgreSQL 16 and development libraries:
+     ```bash
+     sudo dnf install -y postgresql16 postgresql16-server postgresql16-devel
+     ```
+   - Initialize PostgreSQL (if not already initialized):
+     ```bash
+     sudo /usr/pgsql-16/bin/postgresql-16-setup initdb
+     sudo systemctl enable postgresql-16
+     sudo systemctl start postgresql-16
+     ```
+   - Install pgvector:
+     ```bash
+     cd /tmp
+     git clone --branch v0.8.0 https://github.com/pgvector/pgvector.git
+     cd pgvector
+     make
+     sudo make install
+     ```
+   - Set up the database:
+     ```bash
+     sudo -u postgres psql -c "CREATE DATABASE recommendation_db;"
+     sudo -u postgres psql -d recommendation_db -c "CREATE EXTENSION vector;"
+     sudo -u postgres psql -c "CREATE USER user WITH PASSWORD 'pass';"
+     sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE recommendation_db TO user;"
+     ```
+
+3. **Set Up Python Environment**:
    ```bash
+   python3.10 -m venv venv
+   source venv/bin/activate
    pip install -r requirements.txt
    ```
 
-3. **Set Up Environment**:
-   - Create a `.env` file with database credentials and API keys:
+4. **Set Up Environment**:
+   - Edit `.env` with your PostgreSQL credentials:
      ```
-     DATABASE_URL=postgresql://user:pass@localhost:5432/db
+     DATABASE_URL=postgresql://user:pass@localhost:5432/recommendation_db
      ```
 
-4. **Run Postgres VectorDB**:
+5. **Initialize the Database**:
    ```bash
-   docker-compose up -d
+   python scripts/setup_db.py
    ```
 
-5. **Run FastAPI Server**:
+6. **Run FastAPI Server**:
    ```bash
    uvicorn src.api.main:app --host 0.0.0.0 --port 8000
    ```
 
-6. **Run Streamlit Interface**:
+7. **Run Streamlit Interface**:
    ```bash
    streamlit run streamlit/app.py
    ```
 
-7. **Run Tests**:
+8. **Run Tests**:
    ```bash
    pytest tests/
    ```
 
+## System Workflow
+```
+[User Input] --> [Streamlit UI]
+                     |
+                     v
+[FastAPI Endpoint] --> [LlamaIndex: Data Processor]
+                                  |
+                                  v
+[Mem0: Context Storage] <--> [LlamaIndex: Embedding Generator]
+                                  |
+                                  v
+[Postgres VectorDB: Product Embeddings] --> [LlamaIndex: Query Engine]
+                                  |
+                                  v
+[Recommendation Output] --> [Streamlit UI]
+                                  |
+                                  v
+[User Feedback: Ratings/Selections] --> [Feedback Loop: Update Mem0 & Fine-Tune Embeddings]
+                                  |
+                                  v
+[Back to LlamaIndex: Embedding Generator]
+```
+
 ## Development Workflow
-- **AI Agent Development**: Implement agents in `src/agents/` using OpenAI Agents SDK.
+- **LlamaIndex Development**: Implement indexing and querying in `src/agents/`.
 - **API Development**: Add endpoints in `src/api/main.py` using FastAPI.
 - **Data Models**: Define Pydantic models in `src/models/`.
 - **Testing**: Write tests in `tests/` using Pytest.
@@ -102,16 +153,13 @@ AI-Driven-Product-Recommendation-Platform/
 
 ## Future Enhancements
 - Real-time analytics dashboard in Streamlit.
-- Multimodal recommendations (e.g., image-based product matching).
+- Multimodal recommendations (e.g., image-based matching).
 - A/B testing for recommendation algorithms.
 
 ## Contributing
-- Follow the Scrum methodology with daily stand-ups and weekly sprints.
-- Use Git for version control and submit pull requests for review.
-- Ensure all code is tested with Pytest and adheres to security standards (e.g., PII protection).
-
----
+- Follow Scrum methodology with daily stand-ups and weekly sprints.
+- Use Git for version control and submit pull requests.
+- Ensure code is tested with Pytest and adheres to security standards.
 
 **License**: MIT  
-**Contact**: [Your Name/Email]  
 **Repository**: https://github.com/victordeman/AI-Driven-Product-Recommendation-Platform.git
