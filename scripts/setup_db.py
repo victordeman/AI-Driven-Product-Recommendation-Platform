@@ -1,13 +1,18 @@
 import asyncpg
 from pgvector.asyncpg import register_vector
+from sentence_transformers import SentenceTransformer
 
 async def insert_sample_data():
+    model = SentenceTransformer('all-MiniLM-L6-v2')
+    laptop_x_embedding = model.encode("High-performance laptop").tolist()
+    laptop_y_embedding = model.encode("Budget-friendly laptop").tolist()
+    
     conn = await asyncpg.connect("postgresql://user:pass@localhost:5432/recommendation_db")
     await conn.execute("""
         INSERT INTO products (name, description, embedding)
-        VALUES ('Laptop X', 'High-performance laptop', '[0.1,0.2,0.3,0.0,0.0,0.0,...,0.0]'),
-               ('Laptop Y', 'Budget-friendly laptop', '[0.3,0.4,0.5,0.0,0.0,0.0,...,0.0]')
-    """)
+        VALUES ($1, $2, $3), ($4, $5, $6)
+    """, "Laptop X", "High-performance laptop", laptop_x_embedding,
+         "Laptop Y", "Budget-friendly laptop", laptop_y_embedding)
     await conn.close()
 
 async def init_db():
