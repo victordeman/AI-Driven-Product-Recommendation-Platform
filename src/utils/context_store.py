@@ -1,35 +1,61 @@
 import sqlite3
-from typing import Dict, Optional
+import os
+from typing import List, Dict
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 class ContextStore:
-    def __init__(self):
-        self.conn = sqlite3.connect("config/context.db")
-        self.conn.execute("""
-            CREATE TABLE IF NOT EXISTS user_context (
-                user_id TEXT PRIMARY KEY,
-                context TEXT
-            )
-        """)
-        self.conn.commit()
+    def __init__(self, db_path: str = "config/context.db"):
+        self.db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", db_path)
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        self._initialize_db()
 
-    def get_context(self, user_id: str) -> Optional[Dict]:
-        cursor = self.conn.cursor()
-        cursor.execute("SELECT context FROM user_context WHERE user_id = ?", (user_id,))
-        result = cursor.fetchone()
-        return eval(result[0]) if result else None
+    def _initialize_db(self):
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS context (
+                        user_id TEXT PRIMARY KEY,
+                        preferences TEXT,
+                        history TEXT
+                    )
+                """)
+                conn.commit()
+        except sqlite3.OperationalError as e:
+            logger.error(f"Failed to initialize SQLite database: {str(e)}")
+            raise RuntimeError(f"Failed to initialize SQLite database: {str(e)}")
 
-    def update_context(self, user_id: str, context: Dict):
-        cursor = self.conn.cursor()
-        cursor.execute("INSERT OR REPLACE INTO user_context (user_id, context) VALUES (?, ?)",
-                       (user_id, str(context)))
-        self.conn.commit()
+    def save_context(self, user_id: str, preferences: Dict, history: List[str]) -> None:
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                preferences_str = str(preferences)
+                history_str = str(history)
+                cursor.execute("""
+                    INSERT OR REPLACE INTO context (user_id, preferences, history)
+                    VALUES (?, ?, ?)
+                """, (user_id, preferences_str, history_str))
+                conn.commit()
+        except sqlite3.OperationalError as e:
+            logger.error(f"Error saving context: {str(e)}")
+            raise RuntimeError(f"Error saving context: {str(e)}")
 
-    def store_feedback(self, user_id: str, product_name: str, rating: int):
-        context = self.get_context(user_id) or {"budget": 1000, "category": "electronics", "search_history": []}
-        if "feedback" not in context:
-            context["feedback"] = []
-        context["feedback"].append({"product_name": product_name, "rating": rating})
-        self.update_context(user_id, context)
-
-    def __del__(self):
-        self.conn.close()
+    def get_context(self, user_id: str) -> Dict:
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT preferences, history FROM context WHERE user_id = ?", (user_id,))
+                result = cursor.fetchone()
+                if result:
+                    return {
+                        "preferences": eval(result[0]) if result[0] else {},
+                        "search_history": eval(result[1]) if result[1] else []
+                    }
+                return {"preferences": {}, "search_history": []}
+        except sqlite3.OperationalError as e:
+            logger.error(f"Error getting context: {str(e)}")
+            raise RuntimeError(f"Error getting context: {str(e)}")

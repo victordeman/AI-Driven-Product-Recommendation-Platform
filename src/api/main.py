@@ -1,15 +1,17 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from src.agents.data_processor import DataProcessorAgent
 from src.agents.embedding_generator import EmbeddingGeneratorAgent
 from src.agents.recommendation_engine import RecommendationEngineAgent
-from src.utils.context_store import ContextStore
+from src.agents.data_processor import DataProcessorAgent
+import logging
 
-app = FastAPI()
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="AI-Driven Product Recommendation Platform")
 data_processor = DataProcessorAgent()
-embedding_generator = EmbeddingGeneratorAgent()
 recommendation_engine = RecommendationEngineAgent()
-context_store = ContextStore()
 
 class RecommendationRequest(BaseModel):
     user_id: str
@@ -20,22 +22,26 @@ class FeedbackRequest(BaseModel):
     product_name: str
     rating: int
 
+@app.get("/")
+async def root():
+    return {"message": "Welcome to the AI-Driven Product Recommendation Platform. Use POST /recommend to get recommendations."}
+
 @app.post("/recommend")
 async def get_recommendations(request: RecommendationRequest):
-    # Process input
-    processed_data = data_processor.process_input(request.user_id, request.query)
-    
-    # Generate recommendations
-    recommendations = await recommendation_engine.get_recommendations(processed_data["query"])
-    
-    return {"recommendations": [r["name"] for r in recommendations]}
+    try:
+        processed_data = data_processor.process_input(request.user_id, request.query)
+        recommendations = recommendation_engine.recommend(processed_data['cleaned_query'], request.user_id)
+        return {"recommendations": recommendations}
+    except Exception as e:
+        logger.error(f"Error in recommendation endpoint: {str(e)}")
+        raise RuntimeError(f"Error in recommendation endpoint: {str(e)}")
 
 @app.post("/feedback")
 async def submit_feedback(request: FeedbackRequest):
-    # Store feedback
-    context_store.store_feedback(request.user_id, request.product_name, request.rating)
-    
-    # Placeholder for fine-tuning
-    # embedding_generator.fine_tune(context_store.get_context(request.user_id)["feedback"])
-    
-    return {"status": "Feedback recorded"}
+    try:
+        logger.debug(f"Received feedback: {request}")
+        # Placeholder: Store feedback (e.g., in SQLite or PostgreSQL)
+        return {"message": f"Feedback received for user {request.user_id} on {request.product_name} with rating {request.rating}"}
+    except Exception as e:
+        logger.error(f"Error in feedback endpoint: {str(e)}")
+        raise RuntimeError(f"Error in feedback endpoint: {str(e)}")

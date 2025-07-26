@@ -1,5 +1,5 @@
 from sentence_transformers import SentenceTransformer
-from typing import List
+from typing import List, Dict
 
 class EmbeddingGeneratorAgent:
     def __init__(self):
@@ -10,5 +10,4 @@ class EmbeddingGeneratorAgent:
 
     def fine_tune(self, feedback_data: List[Dict]):
         # Placeholder for fine-tuning logic
-        # In production, use feedback to update sentence-transformers model
         pass
