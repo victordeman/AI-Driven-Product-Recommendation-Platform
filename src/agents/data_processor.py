@@ -1,34 +1,24 @@
-from src.utils.context_store import ContextStore
+import logging
 from typing import Dict, List
-import re
+from src.utils.context_store import ContextStore
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 class DataProcessorAgent:
     def __init__(self):
         self.context_store = ContextStore()
 
-    def clean_query(self, query: str) -> str:
-        # Basic cleaning: lowercase and remove special characters
-        cleaned = re.sub(r'[^\w\s]', '', query.lower())
-        return cleaned
-
-    def process_input(self, user_id: str, query: str) -> Dict:
+    def process_input(self, vendor_id: str, query: str) -> Dict:
         try:
-            cleaned_query = self.clean_query(query)
-            user_context = self.context_store.get_context(user_id)
-            # Ensure search_history exists
-            if 'search_history' not in user_context:
-                user_context['search_history'] = []
-            user_context['search_history'].append(cleaned_query)
-            # Save updated context
+            cleaned_query = query.strip().lower()
+            context = self.context_store.get_context(vendor_id)
             self.context_store.save_context(
-                user_id,
-                user_context.get('preferences', {}),
-                user_context['search_history']
+                vendor_id,
+                context.get("preferences", {}),
+                context.get("search_history", []) + [cleaned_query]
             )
-            return {
-                'user_id': user_id,
-                'cleaned_query': cleaned_query,
-                'context': user_context
-            }
+            return {"cleaned_query": cleaned_query}
         except Exception as e:
-            raise RuntimeError(f"Error processing input: {str(e)}")
+            logger.error(f"Error processing input: {str(e)}")
+            raise

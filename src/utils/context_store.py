@@ -1,16 +1,14 @@
 import sqlite3
-import os
-from typing import List, Dict
+import json
 import logging
+from typing import Dict, List
 
-# Set up logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 class ContextStore:
     def __init__(self, db_path: str = "config/context.db"):
-        self.db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", db_path)
-        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        self.db_path = db_path
         self._initialize_db()
 
     def _initialize_db(self):
@@ -19,43 +17,83 @@ class ContextStore:
                 cursor = conn.cursor()
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS context (
-                        user_id TEXT PRIMARY KEY,
+                        vendor_id TEXT PRIMARY KEY,
                         preferences TEXT,
-                        history TEXT
+                        search_history TEXT
+                    )
+                """)
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS feedback (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        vendor_id TEXT,
+                        product_name TEXT,
+                        rating INTEGER,
+                        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                     )
                 """)
                 conn.commit()
-        except sqlite3.OperationalError as e:
-            logger.error(f"Failed to initialize SQLite database: {str(e)}")
-            raise RuntimeError(f"Failed to initialize SQLite database: {str(e)}")
+        except Exception as e:
+            logger.error(f"Error initializing database: {str(e)}")
+            raise
 
-    def save_context(self, user_id: str, preferences: Dict, history: List[str]) -> None:
+    def save_context(self, vendor_id: str, preferences: Dict, search_history: List[str]):
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-                preferences_str = str(preferences)
-                history_str = str(history)
-                cursor.execute("""
-                    INSERT OR REPLACE INTO context (user_id, preferences, history)
-                    VALUES (?, ?, ?)
-                """, (user_id, preferences_str, history_str))
+                cursor.execute(
+                    "INSERT OR REPLACE INTO context (vendor_id, preferences, search_history) VALUES (?, ?, ?)",
+                    (vendor_id, json.dumps(preferences), json.dumps(search_history))
+                )
                 conn.commit()
-        except sqlite3.OperationalError as e:
+        except Exception as e:
             logger.error(f"Error saving context: {str(e)}")
-            raise RuntimeError(f"Error saving context: {str(e)}")
+            raise
 
-    def get_context(self, user_id: str) -> Dict:
+    def get_context(self, vendor_id: str) -> Dict:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT preferences, history FROM context WHERE user_id = ?", (user_id,))
+                cursor.execute(
+                    "SELECT preferences, search_history FROM context WHERE vendor_id = ?",
+                    (vendor_id,)
+                )
                 result = cursor.fetchone()
                 if result:
                     return {
-                        "preferences": eval(result[0]) if result[0] else {},
-                        "search_history": eval(result[1]) if result[1] else []
+                        "preferences": json.loads(result[0]) if result[0] else {},
+                        "search_history": json.loads(result[1]) if result[1] else []
                     }
                 return {"preferences": {}, "search_history": []}
-        except sqlite3.OperationalError as e:
+        except Exception as e:
             logger.error(f"Error getting context: {str(e)}")
-            raise RuntimeError(f"Error getting context: {str(e)}")
+            raise
+
+    def save_feedback(self, vendor_id: str, product_name: str, rating: int):
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT INTO feedback (vendor_id, product_name, rating) VALUES (?, ?, ?)",
+                    (vendor_id, product_name, rating)
+                )
+                conn.commit()
+        except Exception as e:
+            logger.error(f"Error saving feedback: {str(e)}")
+            raise
+
+    def get_feedback(self, vendor_id: str) -> List[Dict]:
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT vendor_id, product_name, rating, timestamp FROM feedback WHERE vendor_id = ?",
+                    (vendor_id,)
+                )
+                results = cursor.fetchall()
+                return [
+                    {"vendor_id": row[0], "product_name": row[1], "rating": row[2], "timestamp": row[3]}
+                    for row in results
+                ]
+        except Exception as e:
+            logger.error(f"Error getting feedback: {str(e)}")
+            raise
