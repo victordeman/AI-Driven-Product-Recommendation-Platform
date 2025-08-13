@@ -8,6 +8,5 @@ pgvector==0.3.0
 sentence-transformers==3.1.1
 llama-index==0.11.17
 python-dotenv==1.0.1
-psycopg2-binary==2.9.10  # Try a newer version or keep as is
 requests==2.32.3
 pandas==2.2.3
