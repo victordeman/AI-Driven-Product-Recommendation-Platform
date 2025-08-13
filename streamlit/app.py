@@ -1,15 +1,14 @@
 import streamlit as st
-import requests
-import logging
 import pandas as pd
+import logging
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 st.title("AI-Driven Product Recommendation Platform")
 
-# All available products
-products = [
+# Mock data for testing
+mock_products = [
     {"id": 1, "name": "Laptop X"},
     {"id": 2, "name": "Laptop Y"},
     {"id": 3, "name": "Smartphone Z"},
@@ -17,11 +16,8 @@ products = [
     {"id": 5, "name": "Headphones B"},
     {"id": 6, "name": "Smartwatch C"},
 ]
-st.subheader("Available Products")
-st.table(pd.DataFrame(products))
-
-# Vendor product quantities
-vendor_products = {
+mock_vendors = ["vendor1", "vendor2", "vendor3"]
+mock_vendor_products = {
     "vendor1": [
         {"id": 1, "name": "Laptop X", "quantity": 5},
         {"id": 3, "name": "Smartphone Z", "quantity": 3},
@@ -39,71 +35,67 @@ vendor_products = {
     ],
 }
 
-# Vendor ID dropdown
-vendor_ids = ["vendor1", "vendor2", "vendor3"]
-vendor_id = st.selectbox("Select Vendor ID", [""] + vendor_ids)
-
-# Store recommendations in session state
+# Initialize session state
 if "recommendations" not in st.session_state:
     st.session_state.recommendations = []
+if "narrative" not in st.session_state:
+    st.session_state.narrative = ""
 
-# Show vendor products and product selection if vendor_id is selected
+# Display available products
+st.subheader("Available Products")
+st.table(pd.DataFrame(mock_products))
+
+# Vendor selection
+vendor_id = st.selectbox("Select Vendor ID", [""] + mock_vendors)
+
 if vendor_id and vendor_id != "":
+    # Display vendor-specific products
     st.subheader(f"Products Available for {vendor_id}")
     vendor_product_table = [
         {"Number": i + 1, "Product ID": p["id"], "Name": p["name"], "Quantity": p["quantity"]}
-        for i, p in enumerate(vendor_products[vendor_id])
+        for i, p in enumerate(mock_vendor_products[vendor_id])
     ]
     st.table(pd.DataFrame(vendor_product_table))
 
-    product_options = [p["name"] for p in vendor_products[vendor_id]]
+    # Product selection
+    product_options = [p["name"] for p in mock_vendor_products[vendor_id]]
     selected_product = st.selectbox("Select Product", [""] + product_options)
 
     if selected_product and selected_product != "":
+        # Mock recommendations
         if st.button("Get Recommendations"):
-            try:
-                response = requests.post(
-                    "http://localhost:8000/recommend",
-                    json={"vendor_id": vendor_id, "query": selected_product}
-                )
-                logger.debug(f"Response status: {response.status_code}, content: {response.text}")
-                if response.status_code == 200:
-                    data = response.json()
-                    st.session_state.recommendations = data.get("recommendations", [])
-                    narrative = data.get("narrative", "No recommendation narrative available.")
-                    if st.session_state.recommendations:
-                        st.subheader("Recommendations")
-                        st.write(narrative)
-                        for rec in st.session_state.recommendations:
-                            st.write(f"- {rec.get('name', 'Unknown')} (ID: {rec.get('id', 'N/A')})")
-                    else:
-                        st.write("No recommendations found.")
-                else:
-                    st.error(f"Error: {response.text}")
-            except Exception as e:
-                st.error(f"Failed to fetch recommendations: {str(e)}")
-                logger.error(f"Error in request: {str(e)}")
+            st.session_state.recommendations = [
+                {"id": 1, "name": "Mock Product A"},
+                {"id": 2, "name": "Mock Product B"},
+                {"id": 3, "name": "Mock Product C"}
+            ]
+            st.session_state.narrative = (
+                f"Based on your selection of '{selected_product}', we recommend: "
+                f"{', '.join([r['name'] for r in st.session_state.recommendations])}. "
+                f"These items are closely related to your choice (mock data)."
+            )
+            logger.info(f"Mock recommendations generated for {selected_product}")
 
+        # Display recommendations
+        if st.session_state.recommendations:
+            st.subheader("Recommendations")
+            st.write(st.session_state.narrative)
+            recommendation_table = [
+                {"Number": i + 1, "Product ID": r["id"], "Name": r["name"]}
+                for i, r in enumerate(st.session_state.recommendations)
+            ]
+            st.table(pd.DataFrame(recommendation_table))
+
+        # Feedback section
         st.subheader("Submit Feedback")
-        feedback_options = [rec.get('name', 'Unknown') for rec in st.session_state.recommendations]
+        feedback_options = [r["name"] for r in st.session_state.recommendations] or product_options
         feedback_product = st.selectbox("Select Product for Feedback", [""] + feedback_options)
         rating = st.slider("Rating", 1, 5, 3)
         if st.button("Submit Feedback"):
             if not feedback_product or feedback_product == "":
                 st.error("Please select a product to provide feedback.")
             else:
-                try:
-                    response = requests.post(
-                        "http://localhost:8000/feedback",
-                        json={"vendor_id": vendor_id, "product_name": feedback_product, "rating": rating}
-                    )
-                    logger.debug(f"Feedback response: {response.status_code}, content: {response.text}")
-                    if response.status_code == 200:
-                        st.success(response.json().get("message", "Feedback submitted successfully"))
-                    else:
-                        st.error(f"Error: {response.text}")
-                except Exception as e:
-                    st.error(f"Failed to submit feedback: {str(e)}")
-                    logger.error(f"Error in feedback request: {str(e)}")
+                st.success(f"Feedback submitted for {feedback_product} with rating {rating} (mock).")
+                logger.info(f"Mock feedback submitted: {feedback_product}, rating: {rating}")
 else:
     st.info("Please select a Vendor ID to proceed.")
