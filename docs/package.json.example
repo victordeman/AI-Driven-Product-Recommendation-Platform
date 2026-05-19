@@ -1,0 +1,44 @@
+{
+  "name": "ai-product-recommendation-platform",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "graph:init": "tsx scripts/setup-graph-indexes.ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "latest",
+    "@clerk/themes": "latest",
+    "ai": "latest",
+    "drizzle-orm": "latest",
+    "lucide-react": "latest",
+    "neo4j-driver": "latest",
+    "next": "15.0.0-rc.0",
+    "postgres": "latest",
+    "react": "19.0.0-rc.0",
+    "react-dom": "19.0.0-rc.0",
+    "tailwind-merge": "latest",
+    "tailwindcss-animate": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "autoprefixer": "latest",
+    "drizzle-kit": "latest",
+    "eslint": "latest",
+    "eslint-config-next": "15.0.0-rc.0",
+    "postcss": "latest",
+    "prettier": "latest",
+    "tailwindcss": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}
