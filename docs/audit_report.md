@@ -6,7 +6,7 @@ The original repository is a Python-based prototype using FastAPI, Streamlit, an
 ## 2. Review of Original Artifacts
 
 ### 2.1 Agents & Workflows (`src/agents/`)
-- **`DataProcessorAgent`**:
+- **`DataProcessorAgent`**: 
     - *Logic*: Cleans user queries (regex) and manages search history.
     - *Context*: Interacts with `ContextStore` to persist search history.
     - *Porting Strategy*: Re-implement as a TypeScript utility or a LlamaIndex.TS `DataProcessor` class.
@@ -25,7 +25,7 @@ The original repository is a Python-based prototype using FastAPI, Streamlit, an
 ### 2.3 Storage & Utilities (`src/utils/`, `config/`)
 - **`ContextStore` (SQLite)**: Manages three tables: `context`, `feedback`, and `vendor_inventory`.
 - **`pgvector`**: Used for product similarity.
-- **Porting Strategy**:
+- **Porting Strategy**: 
     - Move `context` and `feedback` to **Neo4j** (for KG-driven preferences).
     - Move `vendor_inventory` and `products` to **PostgreSQL** (via Drizzle).
 
