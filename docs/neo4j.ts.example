@@ -1,0 +1,33 @@
+import neo4j, { Driver } from 'neo4j-driver';
+
+let driver: Driver;
+
+const uri = process.env.NEO4J_URI!;
+const user = process.env.NEO4J_USERNAME!;
+const password = process.env.NEO4J_PASSWORD!;
+
+export const getNeo4jDriver = () => {
+  if (!driver) {
+    driver = neo4j.driver(uri, neo4j.auth.basic(user, password), {
+      maxConnectionPoolSize: 50,
+      connectionTimeout: 30000,
+    });
+  }
+  return driver;
+};
+
+// Test connection and setup indexes
+export const initNeo4j = async () => {
+  const driver = getNeo4jDriver();
+  const session = driver.session();
+  try {
+    console.log('--- Initializing Neo4j Constraints & Indexes ---');
+    await session.run('CREATE CONSTRAINT user_id IF NOT EXISTS FOR (u:User) REQUIRE u.id IS UNIQUE');
+    await session.run('CREATE CONSTRAINT product_id IF NOT EXISTS FOR (p:Product) REQUIRE p.id IS UNIQUE');
+    console.log('Neo4j readiness confirmed.');
+  } catch (error) {
+    console.error('Neo4j initialization failed:', error);
+  } finally {
+    await session.close();
+  }
+};

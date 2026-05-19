@@ -1,0 +1,35 @@
+ai-product-platform/
+├── apps/
+│   └── web/
+│       ├── app/
+│       │   ├── (auth)/             # Auth routes (sign-in, sign-up)
+│       │   ├── (protected)/        # Protected application routes
+│       │   │   └── dashboard/
+│       │   ├── api/
+│       │   │   ├── chat/           # Chat streaming endpoint
+│       │   │   └── ingest/         # Multi-vendor ingestion endpoint
+│       │   ├── layout.tsx          # Persistent chat widget in root layout
+│       │   └── page.tsx            # Landing page
+│       ├── components/
+│       │   ├── chat/               # Persistent AI Chat Widget
+│       │   ├── ui/                 # shadcn components
+│       │   └── product-card.tsx
+│       ├── hooks/
+│       │   └── use-chat-context.ts
+│       ├── lib/
+│       │   ├── ai.ts               # LlamaIndex.TS / Vercel AI SDK config
+│       │   ├── db.ts               # Drizzle client
+│       │   └── neo4j.ts            # Neo4j client
+│       ├── public/
+│       └── next.config.mjs
+├── packages/
+│   ├── ai/                         # Shared AI logic (agents, prompts, tools)
+│   ├── database/                   # Shared Drizzle schema & migrations
+│   ├── config/                     # Shared ESLint, TS, Tailwind config
+│   └── types/                      # Shared Zod schemas & TS types
+├── scripts/
+│   ├── seed-products.ts
+│   └── setup-graph-indexes.ts
+├── docker-compose.yml
+├── package.json
+└── pnpm-workspace.yaml
