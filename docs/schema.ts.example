@@ -1,0 +1,28 @@
+import { pgTable, text, timestamp, uuid, integer, vector } from "drizzle-orm/pg-core";
+
+// Vendors Table
+export const vendors = pgTable("vendors", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  apiUrl: text("api_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Products Table (with pgvector)
+export const products = pgTable("products", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  description: text("description"),
+  price: integer("price"), // in cents
+  vendorId: uuid("vendor_id").references(() => vendors.id),
+  embedding: vector("embedding", { dimensions: 1536 }), // OpenAI text-embedding-3-small
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Users Table
+export const users = pgTable("users", {
+  id: text("id").primaryKey(), // Using Clerk User ID
+  email: text("email").notNull(),
+  name: text("name"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
