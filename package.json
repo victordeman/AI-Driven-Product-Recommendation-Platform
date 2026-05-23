@@ -2,13 +2,22 @@
   "name": "ai-product-platform",
   "private": true,
   "scripts": {
-    "dev": "pnpm --filter web dev",
-    "build": "pnpm --filter web build",
+    "dev": "pnpm --filter \"web\" dev",
+    "build": "pnpm --filter \"web\" build",
     "lint": "pnpm -r lint",
     "type-check": "pnpm -r type-check"
   },
   "devDependencies": {
+    "drizzle-kit": "^0.31.10",
     "prettier": "^3.0.0",
+    "tsx": "^4.22.3",
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.45.2",
+    "dummy-pkg": "^0.0.1",
+    "neo4j-driver": "^6.0.1",
+    "pg": "^8.21.0",
+    "postgres": "^3.4.9"
   }
 }

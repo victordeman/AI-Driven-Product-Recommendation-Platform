@@ -1,0 +1,14 @@
+{
+  "name": "@repo/ai",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "dependencies": {
+    "llamaindex": "latest",
+    "openai": "latest",
+    "ai": "latest",
+    "zod": "latest",
+    "@repo/database": "workspace:*"
+  }
+}
