@@ -5,10 +5,11 @@
   "main": "./index.ts",
   "types": "./index.ts",
   "dependencies": {
+    "@llamaindex/openai": "^0.4.23",
+    "@repo/database": "workspace:*",
+    "ai": "latest",
     "llamaindex": "latest",
     "openai": "latest",
-    "ai": "latest",
-    "zod": "latest",
-    "@repo/database": "workspace:*"
+    "zod": "latest"
   }
 }
