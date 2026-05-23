@@ -9,21 +9,28 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ai-sdk/react": "^0.0.60",
     "@clerk/nextjs": "latest",
+    "@llamaindex/openai": "^0.4.23",
+    "@radix-ui/react-slot": "^1.2.4",
     "@repo/ai": "workspace:*",
     "@repo/database": "workspace:*",
-    "ai": "latest",
+    "ai": "3.4.33",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "drizzle-orm": "latest",
+    "inngest": "latest",
+    "llamaindex": "^0.12.1",
     "lucide-react": "latest",
     "neo4j-driver": "latest",
     "next": "15.0.0",
     "postgres": "latest",
     "react": "19.0.0",
     "react-dom": "19.0.0",
+    "reactflow": "^11.11.4",
     "tailwind-merge": "latest",
     "tailwindcss-animate": "latest",
-    "zod": "latest",
-    "inngest": "latest",
-    "drizzle-orm": "latest"
+    "zod": "latest"
   },
   "devDependencies": {
     "@types/node": "latest",

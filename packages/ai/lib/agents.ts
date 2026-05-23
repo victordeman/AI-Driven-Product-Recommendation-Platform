@@ -1,11 +1,11 @@
-import { OpenAI, FunctionTool, ReActAgent } from "llamaindex";
+import { FunctionTool, ReActAgent } from "llamaindex";
+import { OpenAI } from "@llamaindex/openai";
 import { updateUserPreference } from "./graph";
 import { hybridSearch } from "./retrieval";
 import { generateEmbedding } from "./embeddings";
 
-const updatePreferenceTool = FunctionTool.from(
+const createUpdatePreferenceTool = (userId: string) => FunctionTool.from(
   async ({ type, name, isNegative }: { type: string, name: string, isNegative: boolean }) => {
-    const userId = "current_user";
     await updateUserPreference(userId, type as any, name, 1.0, isNegative);
     return `Updated preference: ${isNegative ? "Dislikes" : "Prefers"} ${name} (${type})`;
   },
@@ -24,9 +24,8 @@ const updatePreferenceTool = FunctionTool.from(
   }
 );
 
-const recommendProductsTool = FunctionTool.from(
+const createRecommendProductsTool = (userId: string) => FunctionTool.from(
   async ({ query }: { query: string }) => {
-    const userId = "current_user";
     const queryEmbedding = await generateEmbedding(query);
     const results = await hybridSearch(userId, queryEmbedding);
     return JSON.stringify(results);
@@ -44,8 +43,12 @@ const recommendProductsTool = FunctionTool.from(
 
 export const createMarketplaceAgent = (userId: string) => {
   return new ReActAgent({
-    tools: [updatePreferenceTool, recommendProductsTool],
-    llm: new OpenAI({ model: "gpt-4-turbo" }),
-    systemPrompt: `You are an AI Shopping Assistant. Personalize results via the Knowledge Graph.`
+    tools: [createUpdatePreferenceTool(userId), createRecommendProductsTool(userId)],
+    llm: new OpenAI({ model: "gpt-4-turbo", temperature: 0.1 }),
+    systemPrompt: `You are an AI Shopping Assistant.
+    Your goal is to help users find products and refine their preferences.
+    Use the 'updatePreference' tool whenever a user explicitly states a like or dislike for a brand, category, or attribute.
+    Use the 'recommendProducts' tool to search for products. The results will be biased based on the user's Knowledge Graph.
+    Always be helpful, concise, and professional.`
   });
 };
