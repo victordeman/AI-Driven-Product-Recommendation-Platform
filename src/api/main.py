@@ -10,6 +10,18 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+@app.get("/")
+def root():
+    return {
+        "message": "AI-Driven Product Recommendation Platform API is running",
+        "docs": "/docs",
+        "health": "/health"
+    }
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
 # Use lazy initialization for agents that require external services or heavy setup
 data_processor = None
 recommendation_engine = None
